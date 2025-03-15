@@ -1,32 +1,67 @@
-version: '3.8'
+# Guides used:
+# https://a-chacon.com/en/docker/2025/01/27/run-deepseek-locally.html
+# https://blog.xeynergy.com/running-deepseek-r1-locally-with-ollama-and-docker-9b2b7d05607a
 
 services:
   ollama:
-    image: ollama/ollama
-    container_name: ollama
+    image: ollama/ollama    
     volumes:
       - ollama:/root/.ollama
     ports:
       - "11434:11434"
-    command: >
-      /bin/bash -c "
-      ollama pull deepseek-r1:1.5b &&
-      ollama run deepseek-r1:1.5b
-      "
+    healthcheck:
+      test: ollama --version || exit 1      
     restart: always
+    networks:
+      - ollama-net   
+
+  ollama-deepseek-setup:
+    image: ollama/ollama
+    volumes:
+      - ollama:/root/.ollama
+    environment:
+      - OLLAMA_HOST=http://ollama:11434    
+    command: ["pull", "deepseek-r1:1.5b"]
+    depends_on:
+      - ollama
+    networks:
+      - ollama-net
 
   open-webui:
     image: ghcr.io/open-webui/open-webui:main
-    container_name: open-webui
     environment:
       - OLLAMA_BASE_URL=http://ollama:11434
     ports:
-      - "3000:8080"
+      - 3000:8080/tcp
     volumes:
       - open-webui:/app/backend/data
+    # extra_hosts:
+    #  - "host.docker.internal:host-gateway"
     depends_on:
       - ollama
+      - ollama-deepseek-setup
     restart: always
+    networks:
+      - ollama-net      
+
+  debug:
+    image: ubuntu:latest
+    depends_on:
+      - ollama
+      - ollama-deepseek-setup
+      - open-webui
+    command: >
+      bash -c "
+      apt-get update &&
+      apt-get install -y curl vim iputils-ping &&
+      tail -f /dev/null
+      "
+    networks:
+      - ollama-net      
+
+networks:
+  ollama-net:
+    driver: bridge
 
 volumes:
   ollama:
