@@ -15,29 +15,20 @@ services:
     networks:
       - ollama-net   
 
-  ollama-deepseek-setup:
-    image: ollama/ollama
-    volumes:
-      - ollama:/root/.ollama
-    environment:
-      - OLLAMA_HOST=http://ollama:11434    
-    command: ["pull", "deepseek-r1:1.5b"]
-    depends_on:
-      - ollama
-    networks:
-      - ollama-net
-
-  ollama-deepseek-coder-setup:
-    image: ollama/ollama
-    volumes:
-      - ollama:/root/.ollama
+  ollama-ubuntu:
+    build:
+      context: .
+      dockerfile: dockerfile.models
     environment:
       - OLLAMA_HOST=http://ollama:11434
-    command: ["pull", "deepseek-coder:6.7b"]
+    volumes:
+      - ollama:/root/.ollama
     depends_on:
       - ollama
     networks:
       - ollama-net
+    entrypoint: ["/bin/bash"]
+    command: ["-c", "echo 'Starting to pull models...' && ollama pull deepseek-r1:1.5b && ollama pull deepscaler:1.5b && ollama pull deepseek-coder:1.3b && ollama pull deepseek-coder:6.7b && ollama pull moondream && ollama pull llama3.2-vision:11b && ollama pull llama2-uncensored && echo 'All models pulled successfully.'"]
 
   open-webui:
     image: ghcr.io/open-webui/open-webui:main
@@ -47,12 +38,9 @@ services:
       - 3000:8080/tcp
     volumes:
       - open-webui:/app/backend/data
-    # extra_hosts:
-    #  - "host.docker.internal:host-gateway"
     depends_on:
       - ollama
-      - ollama-deepseek-setup
-      - ollama-deepseek-coder-setup
+      - ollama-ubuntu
     restart: always
     networks:
       - ollama-net      
@@ -61,8 +49,7 @@ services:
   #   image: ubuntu:latest
   #   depends_on:
   #     - ollama
-  #     - ollama-deepseek-setup
-  #     - ollama-deepseek-coder-setup
+  #     - ollama-ubuntu
   #     - open-webui
   #   command: >
   #     bash -c "
