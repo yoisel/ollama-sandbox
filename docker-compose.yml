@@ -27,6 +27,18 @@ services:
     networks:
       - ollama-net
 
+  ollama-deepseek-coder-setup:
+    image: ollama/ollama
+    volumes:
+      - ollama:/root/.ollama
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    command: ["pull", "deepseek-coder:6.7b"]
+    depends_on:
+      - ollama
+    networks:
+      - ollama-net
+
   open-webui:
     image: ghcr.io/open-webui/open-webui:main
     environment:
@@ -40,24 +52,26 @@ services:
     depends_on:
       - ollama
       - ollama-deepseek-setup
+      - ollama-deepseek-coder-setup
     restart: always
     networks:
       - ollama-net      
 
-  debug:
-    image: ubuntu:latest
-    depends_on:
-      - ollama
-      - ollama-deepseek-setup
-      - open-webui
-    command: >
-      bash -c "
-      apt-get update &&
-      apt-get install -y curl vim iputils-ping &&
-      tail -f /dev/null
-      "
-    networks:
-      - ollama-net      
+  # debug:
+  #   image: ubuntu:latest
+  #   depends_on:
+  #     - ollama
+  #     - ollama-deepseek-setup
+  #     - ollama-deepseek-coder-setup
+  #     - open-webui
+  #   command: >
+  #     bash -c "
+  #     apt-get update &&
+  #     apt-get install -y curl vim iputils-ping &&
+  #     tail -f /dev/null
+  #     "
+  #   networks:
+  #     - ollama-net      
 
 networks:
   ollama-net:
