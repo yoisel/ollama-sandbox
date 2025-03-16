@@ -4,7 +4,15 @@
 
 services:
   ollama:
+    container_name: ollama-container
     image: ollama/ollama    
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]    
     volumes:
       - ollama:/root/.ollama
     ports:
@@ -13,12 +21,21 @@ services:
       test: ollama --version || exit 1      
     restart: always
     networks:
-      - ollama-net   
+      - external-net
+      - internal-net
 
   ollama-ubuntu:
+    container_name: ollama-ubuntu-container
     build:
       context: .
       dockerfile: dockerfile.models
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]    
     environment:
       - OLLAMA_HOST=http://ollama:11434
     volumes:
@@ -26,11 +43,12 @@ services:
     depends_on:
       - ollama
     networks:
-      - ollama-net
+      - internal-net
     entrypoint: ["/bin/bash"]
     command: ["-c", "echo 'Starting to pull models...' && ollama pull deepseek-r1:1.5b && ollama pull deepscaler:1.5b && ollama pull deepseek-coder:1.3b && ollama pull deepseek-coder:6.7b && ollama pull moondream && ollama pull llama3.2-vision:11b && ollama pull llama2-uncensored && echo 'All models pulled successfully.'"]
 
   open-webui:
+    container_name: open-webui-container
     image: ghcr.io/open-webui/open-webui:main
     environment:
       - OLLAMA_BASE_URL=http://ollama:11434
@@ -43,26 +61,15 @@ services:
       - ollama-ubuntu
     restart: always
     networks:
-      - ollama-net      
-
-  # debug:
-  #   image: ubuntu:latest
-  #   depends_on:
-  #     - ollama
-  #     - ollama-ubuntu
-  #     - open-webui
-  #   command: >
-  #     bash -c "
-  #     apt-get update &&
-  #     apt-get install -y curl vim iputils-ping &&
-  #     tail -f /dev/null
-  #     "
-  #   networks:
-  #     - ollama-net      
+      - external-net
+      - internal-net
 
 networks:
-  ollama-net:
+  external-net:
     driver: bridge
+  internal-net:
+    driver: bridge
+    internal: true    
 
 volumes:
   ollama:
