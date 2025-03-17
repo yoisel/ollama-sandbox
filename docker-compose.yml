@@ -32,7 +32,7 @@ services:
     networks:
       - internal-net
     entrypoint: ["/bin/bash"]
-    command: ["-c", "echo 'Starting to pull models...' && cat /app/models.txt | xargs -n 1 ollama pull && echo 'All models pulled successfully.'"]
+    command: ["-c", "echo 'Starting to pull models...' && cat /app/models.txt | tr -d '\\r' | xargs -n 1 ollama pull && echo 'All models pulled successfully.'"]
 
   open-webui:
     container_name: open-webui-container
