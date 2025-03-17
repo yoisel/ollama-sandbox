@@ -4,36 +4,28 @@
 # chmod +x start.sh
 # ./start.sh
 
-echo "Starting Docker Compose..."
-
-export DOCKER_COMPOSE_GPU_REQUEST="device=all"
-
-echo "Starting Docker Compose with GPU support..."
-docker compose up -d
+if [[ "$*" == *"--gpu"* ]]; then
+  export DOCKER_COMPOSE_GPU_REQUEST="device=all"
+  echo "Starting Docker Compose with GPU support..."
+  docker compose -f docker-compose.yml -f docker-compose.gpu.override.yml up -d
+else
+  echo "Starting Docker Compose in CPU-Only mode..."
+  docker compose up -d
+fi
 
 echo "Waiting for all models to be pulled..."
-MODELS=("deepseek-r1:1.5b" "deepscaler:1.5b" "deepseek-coder:1.3b" "deepseek-coder:6.7b" "moondream" "llama3.2-vision:11b" "llama2-uncensored")
 
 while true; do
-    LOGS=$(docker logs ollama-ubuntu-container 2>&1 | tail -n 50)
-    COMPLETE=true
-
-    for MODEL in "${MODELS[@]}"; do
-        if ! echo "$LOGS" | grep -q "$MODEL"; then
-            COMPLETE=false
-            break
-        fi
-    done
-
-    if [ "$COMPLETE" = true ]; then
+    LOGS=$(docker logs ollama-ubuntu-container 2>&1 | tail -n 10)
+    echo "$LOGS"
+    if echo "$LOGS" | grep -q "All models pulled successfully."; then
         echo "All models pulled successfully!"
         break
     fi
-
-    sleep 5  # Check every 5 seconds
+    sleep 10
 done
 
-echo "Disconnecting Ollama from external-net..."
-docker network disconnect external-net ollama || echo "Already disconnected."
+echo "Disconnecting Ollama from external net..."
+docker network disconnect external-net ollama-container || echo "Disconnected!"
 
 echo "All done!"
