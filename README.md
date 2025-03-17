@@ -1,22 +1,46 @@
-# Ollama Paranoid Sandbox
+# ollama-sandbox
+
+A Docker Compose setup to run Ollama on a local workstation. 
+
+This project leverages Docker containers to create a stand-alone environment for running Ollama, ideal for running open source LLM models (example: Deepseek, qwen2, llama). 
+
+The setup includes multiple services defined in the `docker-compose.yml` file:
+
+- **ollama**: This service runs the main Ollama container. It uses the `ollama/ollama` image and exposes port `11434` for communication.
+
+- **ollama-ubuntu**: This service builds a custom Docker image from the `dockerfile.models` . It installs necessary dependencies and the Ollama tool. The service is responsible for pulling the machine learning models listed in `models.txt` and storing them in a shared volume. It depends on the `ollama` service and runs a command to pull the models upon startup.
+
+- **open-webui**: This service runs the Open WebUI container, which provides a web interface for interacting with Ollama. It uses the `ghcr.io/open-webui/open-webui:main` image and exposes port `3000` for accessing the web UI.
 
 ## How to start this project
 
-### Without GPU support
+Download and install Docker (on Windows, use Docker with WSL)
+
+https://www.docker.com/
+
+### Start without GPU support
+
+Linux / Mac OS X
 
 ```bash
 ./start.sh
 ```
 
+Windows 
+
 ```powershell
 .\start.ps1
 ```
 
-### With GPU support
+### Start with GPU support
+
+Linux / Mac OS X
 
 ```bash
 ./start.sh --gpu
 ```
+
+Windows 
 
 ```powershell
 .\start.ps1 --gpu
@@ -27,6 +51,12 @@ Testing that your GPU support is working:
 ```bash
 docker run --gpus all nvidia/cuda:11.8.0-base-ubuntu22.04 nvidia-smi
 ```
+
+## How to use it
+
+Open your web browser with this address:
+
+http://localhost:3000
 
 ## How to pause it
 
