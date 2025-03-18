@@ -1,7 +1,5 @@
+gemma3:4b
 qwen2.5:0.5b-instruct
 deepseek-r1:1.5b
-deepscaler:1.5b
-deepseek-coder:1.3b
-deepseek-coder:6.7b
 moondream
 llama3.2-vision:11b
