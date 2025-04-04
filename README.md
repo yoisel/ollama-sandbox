@@ -84,10 +84,8 @@ docker rm -f $(docker ps -aq)
 
 ## How to add a new model on the fly for testing
 
-To add a new model for testing, use the following command:
+To add a new model while ollama is running, edit models.txt then run
 
 ```bash
-docker compose exec ollama-ubuntu-container ollama pull <model-name>
+docker start ollama-ubuntu-container
 ```
-
-Replace `<model-name>` with the name of the model you want to add.
