@@ -4,8 +4,31 @@
 # chmod +x start.sh
 # ./start.sh
 
-if [[ "$*" == *"--gpu"* ]]; then
+USE_GPU=false
+CLEAN=false
+for arg in "$@"; do
+  case "$arg" in
+    --gpu) USE_GPU=true ;;
+    --clean) CLEAN=true ;;
+  esac
+done
+
+if [ "$USE_GPU" = true ]; then
   export DOCKER_COMPOSE_GPU_REQUEST="device=all"
+fi
+
+if [ "$CLEAN" = true ]; then
+  echo "Performing clean build: stopping containers, removing images & volumes, pruning builder cache, and rebuilding images..."
+  docker compose down --rmi all -v
+  docker builder prune --all --force
+  if [ "$USE_GPU" = true ]; then
+    docker compose -f docker-compose.yml -f docker-compose.gpu.override.yml build --no-cache --pull
+  else
+    docker compose build --no-cache --pull
+  fi
+fi
+
+if [ "$USE_GPU" = true ]; then
   echo "Starting Docker Compose with GPU support..."
   docker compose -f docker-compose.yml -f docker-compose.gpu.override.yml up -d
 else
