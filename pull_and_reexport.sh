@@ -31,7 +31,10 @@ while IFS= read -r line || [ -n "$line" ]; do
   lower=$(echo "$model" | awk -F: '{print tolower($1)}')
   ctx=4096
   suffix=""
-  if [[ "$lower" == mistral* ]]; then
+  if [[ "$lower" == ministral* ]]; then
+    ctx=262144
+    suffix="-256k"
+  elif [[ "$lower" == mistral* ]]; then
     ctx=32768
     suffix="-32k"
   elif [[ "$lower" == deepseek* ]]; then

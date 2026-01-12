@@ -2,7 +2,7 @@
 
 A Docker Compose setup to run Ollama on a local workstation. 
 
-This project leverages Docker containers to create a stand-alone environment for running Ollama, ideal for running open source LLM models (example: Deepseek, qwen2, llama). 
+This project leverages Docker containers to create a stand-alone environment for running Ollama, ideal for running open source LLM models (example: Deepseek, qwen2, llama).
 
 The setup includes multiple services defined in the `docker-compose.yml` file:
 
@@ -14,9 +14,12 @@ The setup includes multiple services defined in the `docker-compose.yml` file:
 
 ## How to start this project
 
-Download and install Docker (on Windows, use Docker with WSL)
+### Using Docker
 
+Download and install Docker:
 https://www.docker.com/
+
+(On Windows, use Docker with WSL)
 
 ### Start without GPU support
 
@@ -87,5 +90,20 @@ docker rm -f $(docker ps -aq)
 To add a new model while ollama is running, edit models.txt then run
 
 ```bash
-docker start ollama-ubuntu-container
+docker-compose up ollama-ubuntu-container
 ```
+
+## Podman (Alternative)
+
+For Linux users who prefer Podman, a setup script is included:
+
+```bash
+sudo ./podman-setup.sh
+```
+
+This installs Podman, docker-compose, and starts containers in the background. After setup, use standard Docker commands. Containers persist across reboots.
+
+### Notes
+- Podman socket is at `/run/user/$(id -u)/docker.sock` (user-level, not system-level)
+- Containers run as your user instead of root
+- If the service stops after reboot, re-run the setup script
