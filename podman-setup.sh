@@ -40,29 +40,51 @@ sudo systemctl enable --now podman.socket
 # Enable and start the user-level Podman socket for rootless operation
 echo "Enabling and starting user-level Podman socket for $ACTUAL_USER..."
 
-# Kill any existing podman system service for this user
-$USER_CMD pkill -f "podman system service" 2>/dev/null || true
-sleep 1
+# Get user UID for socket paths
+USER_UID=$($USER_CMD id -u)
 
-# Start podman system service as the actual user (not root)
-echo "Starting Podman API service..."
-$USER_CMD podman system service --time 0 > /tmp/podman-$ACTUAL_USER.log 2>&1 &
-SERVICE_PID=$!
-echo "Service PID: $SERVICE_PID"
+# The user-level podman.socket must be started by the actual user, not root
+# We use machinectl or su to run in the user's systemd context
+if [ "$EUID" -eq 0 ] && [ -n "$SUDO_USER" ]; then
+    # Running as root via sudo - need to start socket in user's session
+    echo "Starting podman.socket for user $ACTUAL_USER..."
+    
+    # Try machinectl first (works best for user systemd services)
+    if command -v machinectl &> /dev/null && machinectl shell "$ACTUAL_USER@" /usr/bin/systemctl --user enable --now podman.socket 2>/dev/null; then
+        echo "✓ Podman socket enabled via machinectl"
+    else
+        # Fallback: Use XDG_RUNTIME_DIR and DBUS_SESSION_BUS_ADDRESS
+        export XDG_RUNTIME_DIR="/run/user/$USER_UID"
+        if [ -S "$XDG_RUNTIME_DIR/bus" ]; then
+            export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
+        fi
+        sudo -u "$ACTUAL_USER" XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" DBUS_SESSION_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS:-}" systemctl --user enable --now podman.socket 2>/dev/null || {
+            echo "⚠ Could not start podman.socket via systemctl --user"
+            echo "  You may need to run this after the script completes:"
+            echo "    systemctl --user enable --now podman.socket"
+        }
+    fi
+else
+    # Running as regular user
+    systemctl --user enable --now podman.socket
+fi
 
 # Wait for socket to be created
 echo "Waiting for socket to be ready..."
 max_attempts=20
 for i in $(seq 1 $max_attempts); do
-    if $USER_CMD [ -S /run/user/$($USER_CMD id -u)/podman/podman.sock ]; then
+    if [ -S "/run/user/$USER_UID/podman/podman.sock" ]; then
         echo "✓ Podman socket created successfully"
         break
+    fi
+    if [ $i -eq $max_attempts ]; then
+        echo "⚠ Socket not found after waiting. You may need to manually run:"
+        echo "    systemctl --user enable --now podman.socket"
     fi
     sleep 0.5
 done
 
 # Create docker.sock symlink for docker-compose compatibility
-USER_UID=$($USER_CMD id -u)
 PODMAN_SOCKET="/run/user/$USER_UID/podman/podman.sock"
 DOCKER_SOCKET="/run/user/$USER_UID/docker.sock"
 

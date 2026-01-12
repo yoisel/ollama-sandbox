@@ -93,6 +93,8 @@ To add a new model while ollama is running, edit models.txt then run
 docker-compose up ollama-ubuntu-container
 ```
 
+This command reruns the model download script. Models with existing context window suffixes are skipped. If you're using the `start.sh` script, you can re-run it instead to follow the same startup flow.
+
 ## Podman (Alternative)
 
 For Linux users who prefer Podman, a setup script is included:

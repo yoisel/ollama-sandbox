@@ -48,7 +48,7 @@ http://localhost:3000       # Web UI access after startup
 
 ## Project-Specific Patterns
 
-**Model Naming**: Ollama model IDs use format `name:tag`. When reexported, tag is extended (e.g., `deepseek:7b` → `deepseek:7b-128k`). See lines 30-80 of [pull_and_reexport.sh](../pull_and_reexport.sh) for model-to-context-window logic.
+**Model Naming**: Ollama model IDs use format `name:tag`. When reexported, tag is extended (e.g., `deepseek:7b` → `deepseek:7b-128k`). See [pull_and_reexport.sh](../pull_and_reexport.sh) for model-to-context-window logic.
 
 **Dependency Ordering**: 
 - ollama-ubuntu depends_on ollama (waits for container, not healthcheck)
@@ -78,3 +78,15 @@ http://localhost:3000       # Web UI access after startup
 **Reexport Idempotency**: Script checks if reexported model already exists; removes and recreates if Modelfile changes.
 
 **Podman Support**: See [podman-setup.sh](../podman-setup.sh) for Podman alternative; adapt scripts similarly if needed.
+
+## Documentation Standards
+
+**Code comments, commit messages, and documentation**: Use adjectives only when needed for technical accuracy. Avoid decorative language like "comprehensive," "full," "complete," "excellent," "great." Focus on clarity and precision.
+
+Examples:
+- ❌ "Add comprehensive Podman support documentation"
+- ✅ "Add Podman support documentation"
+- ❌ "Excellent error handling"
+- ✅ "Error handling with graceful fallbacks"
+- ❌ "Detailed architecture guide"
+- ✅ "Architecture documentation"

@@ -28,6 +28,8 @@ while IFS= read -r line || [ -n "$line" ]; do
   echo "\nProcessing model: $model"
 
   # determine context mapping and suffix
+  # context windows based on model specifications:
+  # ministral: 262144 (256K), mistral/deepseek/llama/gpt: 131072 (128K), others: 4096
   lower=$(echo "$model" | awk -F: '{print tolower($1)}')
   ctx=4096
   suffix=""
